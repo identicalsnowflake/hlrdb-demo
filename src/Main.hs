@@ -43,6 +43,7 @@ cidToViews = declareIntegral "comment views"
 cidToLikes :: RedisIntegral CommentId Likes
 cidToLikes = declareIntegral "comment likes"
 
+
 -- example data view
 
 data CommentView = CommentView {
@@ -88,7 +89,7 @@ exampleUsage conn = do
         Comment $ "Example comment (" <> show cid <> ")"
 
       -- add the cids to our comment thread
-      listPrepend' tidToComments tid cids
+      lprepend tidToComments tid cids
 
       -- add some likes and views
       flip evalStateT 1 $ for cids $ \cid -> do
@@ -96,8 +97,8 @@ exampleUsage conn = do
         i <- state $ \s -> (s , s + 1)
 
         lift $ do
-          incrKeyBy cidToViews cid (fromInteger i + 10)
-          incrKeyBy cidToLikes cid (fromInteger i)
+          incrby cidToViews cid (fromInteger i + 10)
+          incrby cidToLikes cid (fromInteger i)
 
 
   -- now let's read the some of the data back from Redis with our view
@@ -105,13 +106,13 @@ exampleUsage conn = do
     
      -- retrieve the first 5 items
     cids :: [ CommentId ] <-
-      listGet tidToComments tid $ fromTo 0 5
+      lrange tidToComments tid $ fromTo 0 5
 
 
     -- render the views
     mviews :: [ Maybe CommentView ] <- do
       
-      -- make sure to traverse' ⟿ directly, so we get 1 large, efficient query
+      -- make sure to traverse' ⟿ directly, so we get a single large, efficient query
       let efficientQuery :: [ CommentId ] ⟿ [ Maybe CommentView ]
                          =  traverse' getCommentView
       
