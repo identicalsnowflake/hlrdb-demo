@@ -1,17 +1,17 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-
 module Main where
 
 import Data.Store
 import GHC.Generics
 import Data.Profunctor.Traversing
-import HLRDB
 import Data.Monoid
 import Database.Redis (Connection,checkedConnect,defaultConnectInfo,runRedis)
 import Data.Maybe (mapMaybe)
 import Data.Foldable
 import Data.Traversable
 import Control.Monad.State
+
+import HLRDB
+
 
 -- example data model
 newtype CommentId = CommentId Identifier deriving (Eq,Ord,Show,Store,IsIdentifier)
@@ -31,7 +31,7 @@ cidToComment = declareBasic "canonical mapping from CommentId to Comment"
 
 -- Views and Likes are mappings to integers in Redis. RedisIntegral is a
 -- subtype of the standard key-value store which has additional
--- primitive commands available, like incrKey and decrKey.
+-- primitive commands available, like incr and decr.
 
 newtype Views = Views Integer deriving (Show,Eq,Ord,Num,Enum,Real,Integral)
 newtype Likes = Likes Integer deriving (Show,Eq,Ord,Num,Enum,Real,Integral)
@@ -55,7 +55,7 @@ data CommentView = CommentView {
 
 
 -- Our basic path declarations can be lifted to queries with liftq,
--- which have many combinators available.
+-- which have several combinators available, like <$>, <*>, and remember.
 getCommentView :: CommentId ⟿ Maybe CommentView
 getCommentView =
   optq (liftq cidToComment)
@@ -65,11 +65,10 @@ getCommentView =
 
   where
     optq :: i ⟿ Maybe a -> i ⟿ (i -> a -> b) -> i ⟿ Maybe b
-    optq q p = remember $ (\f x -> flip fmap x . f) <$> p <*> q
-
-    -- this could probably be a Profunctor typeclass in general
-    remember :: a ⟿ (a -> b) -> a ⟿ b
-    remember (T f) = T $ \x a -> flip ($) a <$> f x a
+    optq q p = rememberAp $ flip ((.) . flip fmap) <$> p <*> q
+      where
+        rememberAp :: a ⟿ (a -> b) -> a ⟿ b
+        rememberAp = fmap (\(x,f) -> f x) . remember
 
 
 exampleUsage :: Connection -> IO ()
