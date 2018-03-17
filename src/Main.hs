@@ -23,7 +23,7 @@ newtype Comment = Comment String deriving (Eq,Ord,Show,Store)
 
 -- A path from ThreadId to a Redis list of CommentIds
 tidToComments :: RedisList ThreadId CommentId
-tidToComments = declareList "ThreadId ~> [ CommentId ]" $ Just 1000
+tidToComments = declareList "ThreadId ~> [ CommentId ]" $ Just (1000 , 0.05)
 
 -- A standard key-value mapping in Redis
 cidToComment :: RedisBasic CommentId (Maybe Comment)
@@ -105,7 +105,7 @@ exampleUsage conn = do
     
      -- retrieve the first 5 items
     cids :: [ CommentId ] <-
-      lrange tidToComments tid $ fromTo 0 5
+      lrange tidToComments tid 0 5
 
 
     -- render the views
