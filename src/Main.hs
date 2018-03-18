@@ -33,22 +33,22 @@ cidToComment = declareBasic "canonical mapping from CommentId to Comment"
 -- subtype of the standard key-value store which has additional
 -- primitive commands available, like incr and decr.
 
-newtype Views = Views Integer deriving (Show,Eq,Ord,Num,Enum,Real,Integral)
-newtype Likes = Likes Integer deriving (Show,Eq,Ord,Num,Enum,Real,Integral)
+newtype ViewCount = ViewCount Integer deriving (Show,Eq,Ord,Num,Enum,Real,Integral)
+newtype LikeCount = LikeCount Integer deriving (Show,Eq,Ord,Num,Enum,Real,Integral)
 
 
-cidToViews :: RedisIntegral CommentId Views
-cidToViews = declareIntegral "comment views"
+cidToViewCount :: RedisIntegral CommentId ViewCount
+cidToViewCount = declareIntegral "comment views"
 
-cidToLikes :: RedisIntegral CommentId Likes
-cidToLikes = declareIntegral "comment likes"
+cidToLikeCount :: RedisIntegral CommentId LikeCount
+cidToLikeCount = declareIntegral "comment likes"
 
 
--- example data view
+-- example data view typically given to API client users via JSON
 
 data CommentView = CommentView {
-    views :: !Views
-  , likes :: !Likes
+    views :: !ViewCount
+  , likes :: !LikeCount
   , commentId :: !CommentId
   , comment :: !Comment
   } deriving (Generic,Show)
@@ -60,8 +60,8 @@ getCommentView :: CommentId ⟿ Maybe CommentView
 getCommentView =
   optq (liftq cidToComment)
      $  CommentView
-    <$> liftq cidToViews
-    <*> liftq cidToLikes
+    <$> liftq cidToViewCount
+    <*> liftq cidToLikeCount
 
   where
     optq :: i ⟿ Maybe a -> i ⟿ (i -> a -> b) -> i ⟿ Maybe b
@@ -96,8 +96,8 @@ exampleUsage conn = do
         i <- state $ \s -> (s , s + 1)
 
         lift $ do
-          incrby cidToViews cid (fromInteger i + 10)
-          incrby cidToLikes cid (fromInteger i)
+          incrby cidToViewCount cid (fromInteger i + 10)
+          incrby cidToLikeCount cid (fromInteger i)
 
 
   -- now let's read the some of the data back from Redis with our view
