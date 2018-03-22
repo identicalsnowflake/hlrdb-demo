@@ -16,7 +16,7 @@ executable hlrdb-demo
   build-depends:
       base ^>= 4.9
     , hedis ^>= 0.10.1
-    , hlrdb ^>= 0.1
+    , hlrdb (>=0.1 && < 0.2) || ^>= 0.2
     , mtl ^>= 2.2.1
     , profunctors ^>= 5.2.2
     , store ^>= 0.4.3.2
