@@ -14,12 +14,12 @@ cabal-version:       >=2.0
 executable hlrdb-demo
   main-is:             Main.hs
   build-depends:
-      base ^>= 4.9
+      base ^>= 4.10
     , hedis ^>= 0.10.1
     , hlrdb (>=0.1 && < 0.2) || ^>= 0.2
     , mtl ^>= 2.2.1
     , profunctors ^>= 5.2.2
-    , store ^>= 0.4.3.2
+    , store ^>= 0.5
   hs-source-dirs:      src
   default-language:    Haskell2010
   default-extensions:

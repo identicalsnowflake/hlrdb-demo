@@ -70,6 +70,8 @@ getCommentView =
         rememberAp :: a ⟿ (a -> b) -> a ⟿ b
         rememberAp = fmap (\(x,f) -> f x) . remember
 
+testHS :: RedisHSet () ThreadId Int
+testHS = declareGlobalHSet "blah"
 
 exampleUsage :: Connection -> IO ()
 exampleUsage conn = do
@@ -82,6 +84,24 @@ exampleUsage conn = do
     cids :: [ CommentId ] <- traverse (const genId) [ 1 .. 10 :: Int ]
 
     runRedis conn $ do
+
+      hmset testHS () []
+
+      liftIO $ putStrLn "ok1"
+
+      xs <- hmget testHS () []
+
+      liftIO $ putStrLn ("ok2" <> show xs)
+
+      hmset testHS () [ (tid , 1) ]
+
+      liftIO $ putStrLn "ok3"
+
+      ys <- hmget testHS () [ tid ]
+
+      liftIO $ putStrLn ("ok4" <> show ys)
+
+      
 
       -- create a comment for each cid
       for_ cids $ \cid -> set' cidToComment cid .
