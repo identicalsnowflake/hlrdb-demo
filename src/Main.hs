@@ -1,9 +1,11 @@
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TemplateHaskell #-}
+
 module Main where
 
 import Data.Store
 import GHC.Generics
 import Data.Profunctor.Traversing
-import Data.Monoid
 import Database.Redis (Connection,checkedConnect,defaultConnectInfo,runRedis)
 import Data.Maybe (mapMaybe)
 import Data.Foldable
@@ -73,6 +75,7 @@ getCommentView =
 testHS :: RedisHSet () ThreadId Int
 testHS = declareGlobalHSet "blah"
 
+
 exampleUsage :: Connection -> IO ()
 exampleUsage conn = do
   
@@ -104,8 +107,12 @@ exampleUsage conn = do
       
 
       -- create a comment for each cid
-      for_ cids $ \cid -> set' cidToComment cid .
-        Comment $ "Example comment (" <> show cid <> ")"
+      let vs :: [ (CommentId , Maybe Comment) ] = flip fmap cids $ \cid -> (cid , Just $ Comment $ "Example comment (" <> show cid <> ")")
+
+      mset $ foldMap (liftqs cidToComment) vs
+      
+      -- for_ cids $ \cid -> set' cidToComment cid .
+      --   Comment $ "Example comment (" <> show cid <> ")"
 
       -- add the cids to our comment thread
       lprepend tidToComments tid cids
